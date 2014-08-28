@@ -4,10 +4,7 @@
 #
 # A collection of useful methods for manipulating lists
 #
-# Author A R Back
-#
-# 28/02/2014 <ab571@sussex.ac.uk> : First revision
-# 28/08/2014 <ab571@sussex.ac.uk> : Moved to utils_cm repo
+# Author A R Back - 28/02/2014 <ab571@sussex.ac.uk> : First revision
 ###############################################################################
 
 def item_containing(expression, list_):
@@ -17,14 +14,13 @@ def item_containing(expression, list_):
     """
     _index = None
     try:
-        assert (type(expression) is str), ("list_manips.item_containing:\n"
-                                           " --> supplied expression must"
-                                           " be a string")
+        assert (type(expression) is str), ("Supplied expression must "
+                                           "be a string")
         for index, item in enumerate(list_):
             assert (type(item) is str), ("list_manips.item_containing:\n "
                                          " --> list_ items must be strings")
             if (item.find(expression) >= 0):
                 _index = index
     except AssertionError as detail:
-        print "Handling run-time error: ", detail
+        print "list_manips.item_containing error: ", detail
     return _index

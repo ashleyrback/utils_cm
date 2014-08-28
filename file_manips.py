@@ -3,62 +3,88 @@
 # file_manips.py
 #
 # A collection of useful methods for manipulating strings with respect to file
-# paths and filenames. And also for copying/cleaning up files
+# paths and filenames
 #
-# Author A R Back 
-#
-# 31/01/2014 <ab571@sussex.ac.uk> : First revision
-# 28/08/2014 <ab571@sussex.ac.uk> : Moved to utils_cm repo
+# Author A R Back - 31/01/2014 <ab571@sussex.ac.uk> : First revision
 ###############################################################################
 import shutil
+import list_manips
+import os
 
-def strip_path(path):
+def cut_path(path):
     """ When supplied a filepath, returns a substring that is the just the 
-    filename.
-
-    :param path: full filepath
-    :type path: str
-    :returns: filename
-    :rtype: str
+    filename
     """
     filename = path[path.rfind("/")+1:]
     return filename
-def split_path(path):
-    """ When supplied a filepath, returns a tuple of directory and filename.
 
-    :param path: full filepath
-    :type path: str
-    :returns: directory, filename
-    :rtype: tuple
+def split_path(path):
+    """ When supplied a filepath, returns a tuple of the filename and 
+    directories
     """
     dir_ = path[:path.rfind("/")+1]
     filename = path[path.rfind("/")+1:]
     return (dir_, filename)
+
 def strip_ext(filename):
     """ Returns a filename without its file extension e.g. myFile.cc would
     return myFile
     """
-    name = filename[:filename.find(".")]
-    return name
+    s=filename
+    sub=s[:s.find(".")]
+    return sub
+
 def split_ext(filename):
     """ As strip_ext, but returns the filename and extension in a tuple """
-    name = filename[:filename.find(".")]
-    ext = filename[filename.find("."):]
+    s=filename
+    name=s[:s.find(".")]
+    ext=s[s.find("."):]
     return name, ext
-def copy_file(source, destination):
-    try:
-        shutil.move(source, destination)
-    except shutil.Error as detail:
+
+def copy_file(source, destination, passnum=1, version=2, overwrite=False):
+    """ A useful function to handle copying files to a different directory
+    """
+    def get_true_dest_from_message(detail):
         message = str(detail).split()
-        if (message[2] == "'/home/ashley/Google"):
-            true_dest = message[2]+message[3]
+        if (message[2] == "'/home/ashley/Google"): # For Google Drive ONLY
+            true_dest = message[2]+" "+message[3] 
         else:
             true_dest = message[2]
         true_dest = true_dest[1:-1] # strip excess "'"
-        file_name, ext = split_ext(true_dest)
-        #print file_name, ext
-        new_dest = file_name+"_#1"+ext
-        #print new_dest
-        print detail, "file not moved!"
-        #print "writing to", new_dest
-        #shutil.move(source, new_dest)
+        return true_dest
+
+    is_copied = False
+    while not is_copied:
+        try:
+            shutil.move(source, destination)
+            is_copied = True
+            print "writing to", destination
+        except shutil.Error as detail:
+            print "file_manips.copy_file: warning,", detail
+            true_dest = get_true_dest_from_message(detail)
+            path, file_name = split_path(true_dest)
+            name, ext = split_ext(file_name)
+            if (name.find("p") == -1):
+                new_source = name + "_p" + str(passnum) + ext
+                os.rename(source, new_source)
+                source = new_source
+                print "file_manips.copy_file: warning, renaming source file to:"
+                print source
+            if overwrite:
+                print "file_manips.copy_file: warning, file:"
+                print " -->", true_dest
+                print "will be overwritten, do you wish to continue y/[n]"
+                delete_file = raw_input()
+                if (delete_file == "y"):
+                    os.remove(true_dest)
+                else:
+                    print "moving", source, "to", true_dest, "aborted!"
+                    is_copied = True
+            else:
+                new_source = name[:name.find("_p" + str(passnum))+3] 
+                new_source += "_q" + str(version) + ext
+                os.rename(source, new_source)
+                source = new_source
+                print "file_manips.copy_file: warning, renaming source file to:"
+                print source
+                version += 1
